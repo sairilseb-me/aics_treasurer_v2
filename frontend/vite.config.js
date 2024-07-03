@@ -9,7 +9,8 @@ export default defineConfig(() => {
         plugins: [vue()],
         resolve: {
             alias: {
-                '@': fileURLToPath(new URL('./src', import.meta.url))
+                '@': fileURLToPath(new URL('./src', import.meta.url)),
+                '@axios': fileURLToPath(new URL('./src/plugins/axios/index.js', import.meta.url))
             }
         },
         server: {
