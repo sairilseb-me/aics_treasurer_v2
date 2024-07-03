@@ -2,7 +2,7 @@
     <Card class="w-100">
         <template #content>
                 <div class="flex justify-end">
-                    <Button class="border border-solid border-slate-500 bg-sky-600 py-2 px-3 text-white">
+                    <Button class="border border-solid border-slate-500 bg-sky-600 py-2 px-3 text-white" @click="test_connect">
                         <i class="pi pi-file"></i>
                         <span class="ml-2">Export  to Excel</span>
                     </Button>
@@ -29,6 +29,7 @@ import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 import Button from 'primevue/button';
 import { onMounted, ref } from 'vue';
+import axios from '@axios';
 export default {
     components: {
         DataTable,
@@ -52,12 +53,22 @@ export default {
             {field: 'actions', header: 'Actions'}
         ])
 
+        const test_connect = () => {
+            axios.get('test')
+            .then(response => {
+                console.log(response)
+            })
+        }
+
         onMounted(() => {
             console.log(import.meta.env.VITE_API_URL)
         })
         return {
             // variables
             headers,
+
+            // methods
+            test_connect,
 
         }
   
