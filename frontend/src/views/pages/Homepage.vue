@@ -28,7 +28,7 @@ import Card from 'primevue/card';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 import Button from 'primevue/button';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 export default {
     components: {
         DataTable,
@@ -51,12 +51,16 @@ export default {
             {field: 'Mode', header: 'Mode'},
             {field: 'actions', header: 'Actions'}
         ])
+
+        onMounted(() => {
+            console.log(import.meta.env.VITE_API_URL)
+        })
         return {
             // variables
             headers,
 
         }
-
+  
     },
 }
 </script>
