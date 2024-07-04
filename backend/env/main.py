@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import logging
 from logging.handlers import RotatingFileHandler
 from flask_cors import CORS
-from models import db, User
+from models import db, User, Assistance, BudgetGO, BudgetPDF, BudgetPSWDO, Client, LogBook, Processor, RecordComplete, RecordGO, RecordPDF, RecordPSWDO
 from dotenv import load_dotenv
 import os
 
@@ -27,9 +27,10 @@ db.init_app(app)
 
 @app.route('/api/test', methods=['GET'])
 def test():
-    users = User.query.all()
+    users = Processor.query.all()
     for user in users:
-        print(user.UserName)
+        if user.ControlNumber is not None:
+            print(user.LastName)
     return jsonify({'message': 'Hello, World!'})
 
 
