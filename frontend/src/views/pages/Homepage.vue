@@ -2,10 +2,6 @@
     <Card class="w-100">
         <template #content>
                 <div class="flex justify-end">
-                    <Button class="border border-solid border-slate-500 bg-sky-600 py-2 px-3 text-white" @click="test_connect">
-                        <i class="pi pi-file"></i>
-                        <span class="ml-2">Export  to Excel</span>
-                    </Button>
                     <InputGroup class="w-[20rem]">
                         <span class="p-inputgroup-addon">
                             <i class="pi pi-search"></i>
@@ -13,8 +9,25 @@
                         <input-text placeholder="Search" class="border border-solid border-slate-400 py-2 px-3"></input-text>
                     </InputGroup>
                 </div>
-            <data-table class="border rounded mt-5">
-               <Column v-for="header in headers" :key="header.field" :field="header.field" :header="header.header"></Column>
+            <data-table class="border rounded mt-5" :value="assistance" selectionMode="single"  paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" ref="dt">
+                <template #header>
+                    <div style="text-align: left">
+                        <Button icon="pi pi-external-link" class="bg-sky-500 px-5 py-2 text-white" label="Export" @click="exportCSV($event)" />
+                    </div>
+                </template>
+               <Column v-for="header in headers" :key="header.field" :field="header.field" :header="header.header">
+                    <template v-if="header.field == 'FullName'" #body="{data}">
+                        <span>{{data.FirstName}} {{ data.MiddleName }} {{ data.LastName }}</span>
+                    </template>
+                    <template v-if="header.field == 'Amount'" #body="{data}">
+                        <span v-if="data.Amount == null">N/A</span>
+                        <span v-else>₱ {{data.Amount}}</span>
+                    </template>
+                    <template v-if="header.field == 'actions'" #body="{data}">
+                        <Button icon="pi pi-eye" style="color:orange" class="p-button-rounded p-button-info" @click="editAssistance(data)"></Button>
+                        <Button icon="pi pi-trash" style="color:red" class="p-button-rounded p-button-danger"></Button>
+                    </template>
+                </Column>
             </data-table>
         </template>
     </Card>
@@ -42,7 +55,9 @@ export default {
     },
     setup() {
         
+        const assistance = ref([])
         const headers = ref([
+           
             {field: 'FullName', header: 'Full Name'},
             {field: 'TypeOfAssistance', header: 'Type Of Assistance'},
             {field: 'Category', header: 'Category'},
@@ -53,22 +68,35 @@ export default {
             {field: 'actions', header: 'Actions'}
         ])
 
-        const test_connect = () => {
-            axios.get('test')
+        const dt = ref()
+
+        const getData = () => {
+            axios.get('get-data')
             .then(response => {
-                console.log(response)
+                assistance.value = response.data.data
             })
         }
 
+        const editAssistance = (data) => {
+            console.log(data)
+        }
+
+        const exportCSV = (event) => {
+            dt.value.exportCSV()    
+        }
+
         onMounted(() => {
-            console.log(import.meta.env.VITE_API_URL)
+           getData()
         })
         return {
             // variables
             headers,
+            assistance,
+            dt,
 
             // methods
-            test_connect,
+            editAssistance,
+            exportCSV,
 
         }
   
