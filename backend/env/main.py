@@ -6,6 +6,7 @@ from models import db, User, Assistance, BudgetGO, BudgetPDF, BudgetPSWDO, Clien
 from dotenv import load_dotenv
 import os
 from sqlalchemy import text
+from db_utils import DB_Utils
 
 
 load_dotenv()
@@ -25,6 +26,7 @@ CORS(app)
 
 db.init_app(app)
 
+db_utils = DB_Utils(db)
 
 @app.route('/api/test', methods=['GET'])
 def test():
@@ -67,26 +69,8 @@ def get_data():
             INNER JOIN AssistanceData AS a ON c.ControlNumber = a.ControlNumber
             WHERE a.Released = 'No' AND a.Amount IS NOT NULL;
         """)
-        result = db.session.execute(query)
-        rows = result.fetchall()
-
         # Convert query results to list of dictionaries
-        output = []
-        for row in rows:
-            data = {
-                "ControlNumber": row.ControlNumber,
-                "RecordNumber": row.RecordNumber,
-                "FirstName": row.FirstName,
-                "MiddleName": row.MiddleName,
-                "LastName": row.LastName,
-                "TypeOfAssistance": row.TypeOfAssistance,
-                "Category": row.Category,
-                "SourceOfFund": row.SourceOfFund,
-                "Amount": row.Amount,
-                "ReceivedDate": row.ReceivedDate,
-                "Mode": row.Mode
-            }
-            output.append(data)
+        output = db_utils.get_data(query)
 
         # Calculate total items and pages
         total_items = len(output)
@@ -105,6 +89,24 @@ def get_data():
             'per_page': per_page,
             'data': paginated_output
         })
+    except Exception as e:
+        app.logger.error(f'Error: {e}')
+        return jsonify({'error': 'An error occurred'}), 500
+    
+@app.route('/api/get-client-processor-data', methods=['GET'])
+def get_client_processor_data():
+    try:
+        #Get ControlNumber and RecordNumber from request
+        control_number = request.args.get('control_number')
+        record_number = request.args.get('record_number')
+        
+        query = text(f"""
+            SELECT * FROM AssistanceData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
+        """)
+        
+        result = db_utils.get_client_processor_data(query)
+        
+        return {'data': result}, 200
     except Exception as e:
         app.logger.error(f'Error: {e}')
         return jsonify({'error': 'An error occurred'}), 500
