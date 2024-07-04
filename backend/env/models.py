@@ -20,10 +20,10 @@ class Assistance(db.Model):
     __table_args__ = (
         db.PrimaryKeyConstraint('ControlNumber', 'RecordNumber', name='control_record_pk'),
     )
-    ControlNumber = db.Column(db.String, nullable=False)
+    ControlNumber = db.Column(db.String, nullable=True)
     TypeOfAssistance = db.Column(db.String, nullable=True)
     Category = db.Column(db.String, nullable=True)
-    Amount = db.Column(db.Float, nullable=True)
+    Amount = db.Column(db.Float, nullable=True, default=0.0)
     SourceOfFund = db.Column(db.String, nullable=True)
     ReceivedDate = db.Column(db.DateTime, nullable=True)
     Hospital = db.Column(db.String, nullable=True)
@@ -99,13 +99,13 @@ class Client(db.Model):
     __table_args__ = (
         db.PrimaryKeyConstraint('ControlNumber', name='client_pk'),
     )
-    ControlNumber = db.Column(db.String, nullable=False)
+    ControlNumber = db.Column(db.String, nullable=True)
     FirstName = db.Column(db.String, nullable=True)
     MiddleName = db.Column(db.String, nullable=True)
     LastName = db.Column(db.String, nullable=True)
     Gender = db.Column(db.String, nullable=True)
     BirthDate = db.Column(db.Date, nullable=True)
-    Age = db.Column(db.String, nullable=True)
+    Age = db.Column(db.String, nullable=True, default='0')
     CivilStatus = db.Column(db.String, nullable=True)
     Barangay = db.Column(db.String, nullable=True)
     Municipality = db.Column(db.String, nullable=True)
@@ -237,12 +237,12 @@ class RecordPSWDO(db.Model):
     TypeOfAssistance = db.Column(db.String, nullable=True)
     Category = db.Column(db.String, nullable=True)
     SourceOfFund = db.Column(db.String, nullable=True)
-    Amount  = db.Column(db.Float, nullable=True)
+    Amount  = db.Column(db.Float, nullable=True, default=0.0)
     ReceivedDate = db.Column(db.DateTime, nullable=True)
     Classtype = db.Column(db.String, nullable=True)
     Mode = db.Column(db.String, nullable=True)
     Released = db.Column(db.String, nullable=True)
-    Balance = db.Column(db.Float, nullable=True)
+    Balance = db.Column(db.Float, nullable=True, default=0.0)
     DateReceived = db.Column(db.DateTime, nullable=True)
     
     def __repr__(self):
