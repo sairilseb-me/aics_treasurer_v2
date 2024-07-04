@@ -49,11 +49,36 @@ def test():
         output.append(data)
         
     # tupl_result = [tuple(row) for row in rows]
+    return {"message": "output", "output": output}, 200
     
 
-   
+@app.route('/api/get-data', methods=['GET'])
+def get_data():
+    query = text("""Select c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName, a.TypeOfAssistance, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode from ClientData as c INNER Join AssistanceData as a on c.ControlNumber = a.ControlNumber Where a.Released = 'No' And a.Amount IS NOT NULL;""")
+    result = db.session.execute(query)
+    rows = result.fetchall()
 
-    return {"message": "output", "output": output}, 200
+    output = []
+    
+    for row in rows:
+        data = {
+            "ControlNumber": row.ControlNumber,
+            "RecordNumber": row.RecordNumber,
+            "FirstName": row.FirstName,
+            "MiddleName": row.MiddleName,
+            "LastName": row.LastName,
+            "TypeOfAssistance": row.TypeOfAssistance,
+            "SourceOfFund": row.SourceOfFund,
+            "Amount": row.Amount,
+            "ReceivedDate": row.ReceivedDate,
+            "Mode": row.Mode
+        }
+        output.append(data)
+        
+    # tupl_result = [tuple(row) for row in rows]
+    
+    return {"data": output}, 200
+
 
 if __name__ == '__main__':    
     app.run(debug=True)
