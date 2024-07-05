@@ -64,6 +64,7 @@ export default {
         
         const assistance = ref([])
         const clientData = ref({})
+        const budgetBalance = ref(0)
         const processorData = ref({})
         const clientProcessorDialogShow = ref(false)
         const headers = ref([
@@ -99,7 +100,8 @@ export default {
             axios.get(`get-client-processor-data`, {
                 params: {
                     control_number: client.ControlNumber,
-                    record_number: client.RecordNumber
+                    record_number: client.RecordNumber,
+                    dept: client.SourceOfFund
                 }
             }).then(response => {
                 
@@ -107,8 +109,9 @@ export default {
                     fullName: `${client.FirstName} ${client.MiddleName} ${client.LastName}`,
                     ...response.data.client
                 }
-  
+                
                 processorData.value = response.data.processor
+                budgetBalance.value = response.data.budget_balance
                 clientProcessorDialogShow.value = true
             })
         }

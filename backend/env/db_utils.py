@@ -78,4 +78,9 @@ class DB_Utils:
         row = result.fetchone()
         type = 'processor'
         return self.convert_dict(row, type)
+    
+    def get_budget_amount(self, query):
+        result = self.db.session.execute(query)
+        row = result.fetchone()
+        return row.BudgetBalance
         
