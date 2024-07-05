@@ -99,7 +99,8 @@ def get_client_processor_data():
         #Get ControlNumber and RecordNumber from request
         control_number = request.args.get('control_number')
         record_number = request.args.get('record_number')
-        
+        dept = request.args.get('dept')
+            
         query_client = text(f"""
             SELECT * FROM AssistanceData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
         """)
@@ -108,10 +109,21 @@ def get_client_processor_data():
             SELECT * FROM ProcessorData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}';
         """)
         
+        budget_dept = ''
+        
+        if dept == 'Governors Office':
+            budget_dept = 'BudgetGO'
+        elif dept == 'PDF':
+            budget_dept = 'BudgetPDF'
+        else:
+            budget_dept = 'BudgetPSWDO'
+        
+        query_budget = text(f"""SELECT * from {budget_dept} Order By DateChange DESC""")
+        
         client = db_utils.get_client_data(query_client)
         processor = db_utils.get_processor_data(query_processor)
-        
-        return {'client': client, 'processor': processor}, 200
+        budget_balance = db_utils.get_budget_amount(query_budget)
+        return {'client': client, 'processor': processor, 'budget_balance': budget_balance}, 200
     except Exception as e:
         app.logger.error(f'Error: {e}')
         return jsonify({'error': 'An error occurred'}), 500
