@@ -1,5 +1,6 @@
 <template>
-    <Card class="w-100">
+    <div>
+        <Card class="w-100">
         <template #content>
                 <div class="flex justify-end">
                     <InputGroup class="w-[20rem]">
@@ -24,13 +25,17 @@
                         <span v-else>₱ {{data.Amount}}</span>
                     </template>
                     <template v-if="header.field == 'actions'" #body="{data}">
-                        <Button icon="pi pi-eye" style="color:orange" class="p-button-rounded p-button-info" @click="editAssistance(data)"></Button>
+                        <Button icon="pi pi-eye" style="color:orange" class="p-button-rounded p-button-info" @click="openClientProcessorDialog(data)"></Button>
                         <Button icon="pi pi-trash" style="color:red" class="p-button-rounded p-button-danger"></Button>
                     </template>
                 </Column>
             </data-table>
         </template>
     </Card>
+    <ClientProcessorDialog :visible="clientProcessorDialogShow" :client="clientData" :processor="processorData" @close="closeClientProcessorDialog"></ClientProcessorDialog>
+    </div>
+    
+    
 </template>
 
 <script>
@@ -42,6 +47,7 @@ import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 import Button from 'primevue/button';
 import { onMounted, ref } from 'vue';
+import ClientProcessorDialog from '@/components/dialogs/client-processor-dialog.vue'
 import axios from '@axios';
 export default {
     components: {
@@ -52,10 +58,14 @@ export default {
         InputGroup,
         InputGroupAddon,
         Button,
+        ClientProcessorDialog,
     },
     setup() {
         
         const assistance = ref([])
+        const clientData = ref({})
+        const processorData = ref({})
+        const clientProcessorDialogShow = ref(false)
         const headers = ref([
            
             {field: 'FullName', header: 'Full Name'},
@@ -85,6 +95,28 @@ export default {
             dt.value.exportCSV()    
         }
 
+        const openClientProcessorDialog = (client) => {
+            axios.get(`get-client-processor-data`, {
+                params: {
+                    control_number: client.ControlNumber,
+                    record_number: client.RecordNumber
+                }
+            }).then(response => {
+                
+                clientData.value = {
+                    fullName: `${client.FirstName} ${client.MiddleName} ${client.LastName}`,
+                    ...response.data.client
+                }
+  
+                processorData.value = response.data.processor
+                clientProcessorDialogShow.value = true
+            })
+        }
+
+        const closeClientProcessorDialog = () => {
+            clientProcessorDialogShow.value = false
+        }
+
         onMounted(() => {
            getData()
         })
@@ -93,10 +125,15 @@ export default {
             headers,
             assistance,
             dt,
-
+            clientProcessorDialogShow,
+            clientData,
+            processorData,
+      
             // methods
             editAssistance,
             exportCSV,
+            openClientProcessorDialog,
+            closeClientProcessorDialog,
 
         }
   

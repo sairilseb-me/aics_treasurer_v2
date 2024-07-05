@@ -30,28 +30,28 @@ db_utils = DB_Utils(db)
 
 @app.route('/api/test', methods=['GET'])
 def test():
-    query = text("""Select c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName, a.TypeOfAssistance, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode from ClientData as c INNER Join AssistanceData as a on c.ControlNumber = a.ControlNumber Where a.Released = 'No' And a.Amount IS NOT NULL;""")
+    query = text("""Select TOP 10 c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName, a.TypeOfAssistance, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode from ClientData as c INNER Join AssistanceData as a on c.ControlNumber = a.ControlNumber Where a.Released = 'No' And a.Amount IS NOT NULL;""")
     result = db.session.execute(query)
     rows = result.fetchall()
-    output = []
+    # output = []
     
-    for row in rows:
-        data = {
-            "ControlNumber": row.ControlNumber,
-            "RecordNumber": row.RecordNumber,
-            "FirstName": row.FirstName,
-            "MiddleName": row.MiddleName,
-            "LastName": row.LastName,
-            "TypeOfAssistance": row.TypeOfAssistance,
-            "SourceOfFund": row.SourceOfFund,
-            "Amount": row.Amount,
-            "ReceivedDate": row.ReceivedDate,
-            "Mode": row.Mode
-        }
-        output.append(data)
+    # for row in rows:
+    #     data = {
+    #         "ControlNumber": row.ControlNumber,
+    #         "RecordNumber": row.RecordNumber,
+    #         "FirstName": row.FirstName,
+    #         "MiddleName": row.MiddleName,
+    #         "LastName": row.LastName,
+    #         "TypeOfAssistance": row.TypeOfAssistance,
+    #         "SourceOfFund": row.SourceOfFund,
+    #         "Amount": row.Amount,
+    #         "ReceivedDate": row.ReceivedDate,
+    #         "Mode": row.Mode
+    #     }
+    #     output.append(data)
         
     # tupl_result = [tuple(row) for row in rows]
-    return {"message": "output", "output": output}, 200
+    return {"message": "output"}, 200
     
 
 @app.route('/api/get-data', methods=['GET'])
@@ -100,13 +100,18 @@ def get_client_processor_data():
         control_number = request.args.get('control_number')
         record_number = request.args.get('record_number')
         
-        query = text(f"""
+        query_client = text(f"""
             SELECT * FROM AssistanceData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
         """)
         
-        result = db_utils.get_client_processor_data(query)
+        query_processor = text(f"""
+            SELECT * FROM ProcessorData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}';
+        """)
         
-        return {'data': result}, 200
+        client = db_utils.get_client_data(query_client)
+        processor = db_utils.get_processor_data(query_processor)
+        
+        return {'client': client, 'processor': processor}, 200
     except Exception as e:
         app.logger.error(f'Error: {e}')
         return jsonify({'error': 'An error occurred'}), 500
