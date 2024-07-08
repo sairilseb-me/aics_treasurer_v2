@@ -83,4 +83,11 @@ class DB_Utils:
         result = self.db.session.execute(query)
         row = result.fetchone()
         return row.BudgetBalance
+    
+    def save_comment(self, query, comment, control_number, record_number):
+        result = self.db.session.execute(query, {'comment': comment, 'control_number': control_number, 'record_number': record_number})
+        self.db.session.commit()
+        if result:
+            return True
+        return False
         
