@@ -14,7 +14,6 @@
             <p><strong>Type Of Assistance:</strong> {{ clientData.TypeOfAssistance }}</p>
             <p><strong>Category:</strong> {{ clientData.Category }}</p>
             <p><strong>Source of Fund:</strong> {{ clientData.SourceOfFund }}</p>
-            
         </Panel>
         <Panel class="border border-solid border-slate-800 mt-3">
             <template #header>
@@ -28,14 +27,14 @@
             <p><strong>Relationship with Client:</strong> {{ processorData.Relationship }}</p>
         </Panel>
         <FloatLabel class="mt-5">
-                <Textarea v-model="processorData.ProblemPresented" rows="5" cols="30" class="w-full border border-slate-700 p-3" />
+                <Textarea v-model="comment" rows="5" cols="30" class="w-full border border-slate-700 p-3" />
                 <label>Comment</label>
             </FloatLabel>
         <template #footer>
             <div class="flex justify-between w-full">
                 <div>
                     <Button type="button" label="Cancel" severity="secondary" class="border border-solid border-slate-400 bg-slate-500 text-white px-5 py-2 mr-3" @click="closeDialog"></Button>
-                    <Button type="button" label="Save" class="border border-solid border-slate-400 bg-green-500 text-white px-5 py-2"></Button>
+                    <Button type="button" label="Save" class="border border-solid border-slate-400 bg-green-500 text-white px-5 py-2" @click="save"></Button>
                 </div>
                 <Button type="button" label="Release" class="border border-solid border-slate-400 bg-blue-500 text-white px-5 py-2"></Button>
             </div>
@@ -49,7 +48,9 @@ import Dialog from 'primevue/dialog';
 import Panel from 'primevue/panel';
 import Card from 'primevue/card';
 import Textarea from 'primevue/textarea';
+import ToastService from '@/plugins/toasts'
 import { watch, ref } from 'vue';
+import axios from '@axios'
 export default {
     components: {
         Dialog,
@@ -77,6 +78,7 @@ export default {
         const clientData = ref({})
         const processorData = ref({})
         const comment = ref('')
+        const toast = new ToastService()
 
         watch(
             () => props.visible,
@@ -95,6 +97,25 @@ export default {
             }
         )
 
+        const save = () => {
+            if (comment.value) {
+                const final_comment = `${clientData.value.ProblemPresented} \n Treasurer's Comment: ${comment.value}`
+                axios.post(`/save-comment/${clientData.value.ControlNumber}/${clientData.value.RecordNumber}`, {
+                    comment: final_comment,
+                }).then(response => {
+                    if (response.data.success) {
+                        toast.showMessage('success', 'Success', 'Comment has been saved.')
+                    }else {
+                        toast.showMessage('error', 'Error', 'An error occured while saving comment. Please try again.')
+                    }
+                }).catch(error => {
+                    toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
+                })
+                
+            }
+            closeDialog()
+        }
+
         const closeDialog = () => {
             emit('close')
             resetValues()
@@ -111,9 +132,11 @@ export default {
             visible,
             clientData,
             processorData,
+            comment,
 
             //methods
-            closeDialog
+            closeDialog,
+            save
         }
     },
 }
