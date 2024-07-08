@@ -105,6 +105,7 @@ export default {
                 }).then(response => {
                     if (response.data.success) {
                         toast.showMessage('success', 'Success', 'Comment has been saved.')
+                        comment.value = ''
                     }else {
                         toast.showMessage('error', 'Error', 'An error occured while saving comment. Please try again.')
                     }
