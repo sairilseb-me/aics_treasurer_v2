@@ -127,6 +127,18 @@ def get_client_processor_data():
     except Exception as e:
         app.logger.error(f'Error: {e}')
         return jsonify({'error': 'An error occurred'}), 500
+    
+@app.route('/api/save-comment/<control_number>/<record_number>', methods=['POST'])
+def save_comment(control_number, record_number):
+    print(control_number, record_number)
+    comment = request.json['comment']
+    query = text(f"""UPDATE AssistanceData SET ProblemPresented = :comment WHERE ControlNumber = :control_number And RecordNumber = :record_number """)
+    
+    result = db_utils.save_comment(query, comment, control_number, record_number)
+    if result:
+        return {"success": result, "message": "Comment has been saved!"}
+    
+    return {"success": result, "message": "Saving comment failed!"}
 
 if __name__ == '__main__':    
     app.run(debug=True)

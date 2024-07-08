@@ -1,7 +1,13 @@
-<script setup></script>
+<script setup>
+import Toast from 'primevue/toast';
+</script>
 
 <template>
-    <router-view />
+    <div>
+        <Toast />
+        <router-view />
+    </div>
 </template>
+
 
 <style scoped></style>
