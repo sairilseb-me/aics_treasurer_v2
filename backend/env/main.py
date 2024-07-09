@@ -150,7 +150,57 @@ def release_assistance(control_number, record_number, department):
         return {"message": "Assistance Released!"}, 200
     
     return {'message': 'Failed to release assistance!'}, 500
-    
+
+@app.route('/api/search-client', methods=['GET'])
+def search_client():
+    try:
+        first_name = request.args.get('first_name')
+        last_name = request.args.get('last_name')
+
+        
+        # Get pagination parameters from request
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        
+        query = ""
+        
+        if (first_name and last_name):
+            query = text(f"""SELECT c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName,
+                    a.TypeOfAssistance, a.Category, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode
+                FROM ClientData AS c
+                INNER JOIN AssistanceData AS a ON c.ControlNumber = a.ControlNumber
+                WHERE c.FirstName = '{first_name}' And c.LastName = '{last_name}' And a.Released = 'No' AND a.Amount IS NOT NULL;""")
+            
+        else: query = text(f"""
+                        SELECT c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName,
+                            a.TypeOfAssistance, a.Category, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode
+                            FROM ClientData AS c
+                            INNER JOIN AssistanceData AS a ON c.ControlNumber = a.ControlNumber
+                            WHERE c.LastName = '{last_name}' And a.Released = 'No' AND a.Amount IS NOT NULL;
+                        """)
+        
+        output = db_utils.get_data(query)
+        
+            # Calculate total items and pages
+        total_items = len(output)
+        total_pages = (total_items + per_page - 1) // per_page
+
+        # Slice the output based on page and per_page
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_output = output[start:end]
+
+        # Return paginated results with metadata
+        return jsonify({
+            'total_items': total_items,
+            'total_pages': total_pages,
+            'current_page': page,
+            'per_page': per_page,
+            'data': paginated_output
+        }), 200
+    except Exception as e:
+        app.logger.error(f'Error: {e}')
+        return jsonify({'error': 'An error occurred'}), 500
 
 if __name__ == '__main__':    
     app.run(debug=True)
