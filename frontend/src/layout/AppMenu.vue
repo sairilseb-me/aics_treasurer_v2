@@ -14,11 +14,6 @@ const model = ref([
         to: '/pages',
         items: [
             {
-                label: 'Landing',
-                icon: 'pi pi-fw pi-globe',
-                to: '/landing'
-            },
-            {
                 label: 'Auth',
                 icon: 'pi pi-fw pi-user',
                 items: [
@@ -40,26 +35,6 @@ const model = ref([
                 ]
             },
             {
-                label: 'Crud',
-                icon: 'pi pi-fw pi-pencil',
-                to: '/pages/crud'
-            },
-            {
-                label: 'Timeline',
-                icon: 'pi pi-fw pi-calendar',
-                to: '/pages/timeline'
-            },
-            {
-                label: 'Not Found',
-                icon: 'pi pi-fw pi-exclamation-circle',
-                to: '/pages/notfound'
-            },
-            {
-                label: 'Empty',
-                icon: 'pi pi-fw pi-circle-off',
-                to: '/pages/empty'
-            },
-            {
                 label: 'Test Page',
                 icon: 'pi pi-tags',
                 to: '/pages/test'
@@ -68,7 +43,7 @@ const model = ref([
                 label: 'Homepage',
                 icon: 'pi pi-home',
                 to: '/pages/home'
-            }
+            },
         ]
     },
 ]);

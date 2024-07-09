@@ -7,7 +7,7 @@
                         <span class="p-inputgroup-addon">
                             <i class="pi pi-search"></i>
                         </span>
-                        <input-text placeholder="Search" class="border border-solid border-slate-400 py-2 px-3"></input-text>
+                        <input-text placeholder="Search" class="border border-solid border-slate-400 py-2 px-3" v-model="search" @change="searchClient"></input-text>
                     </InputGroup>
                 </div>
             <data-table class="border rounded mt-5" :value="assistance" selectionMode="single"  paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" ref="dt">
@@ -66,6 +66,7 @@ export default {
         const budgetBalance = ref(0)
         const processorData = ref({})
         const clientProcessorDialogShow = ref(false)
+        const search = ref('')
         const headers = ref([
            
             {field: 'FullName', header: 'Full Name'},
@@ -115,6 +116,36 @@ export default {
             })
         }
 
+        const searchClient = () => {
+            if (search.value == '') {
+                getData()
+                return
+            }
+           if (search.value.includes(",")){
+                const searchArray = search.value.split(",")
+                axios.get(`search-client`, {
+                    params: {
+                        last_name: searchArray[0].trim(),
+                        first_name: searchArray[1].trim()
+                    }
+                }).then(response => {
+                    if (response.status == 200) {
+                        assistance.value = response.data.data
+                    }
+                })
+           }else {
+            axios.get(`search-client`, {
+                params: {
+                    last_name: search.value.trim()
+                }
+            }).then(response => {
+                if (response.status == 200) {
+                   assistance.value = response.data.data
+                }
+            })
+           }
+        }
+
         const closeClientProcessorDialog = () => {
             clientProcessorDialogShow.value = false
             getData()
@@ -130,12 +161,14 @@ export default {
             clientData,
             processorData,
             budgetBalance,
+            search,
       
             // methods
             editAssistance,
             exportCSV,
             openClientProcessorDialog,
             closeClientProcessorDialog,
+            searchClient,
 
         }
   
