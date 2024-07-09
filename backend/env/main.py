@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import logging
 from logging.handlers import RotatingFileHandler
 from flask_cors import CORS
-from models import db, User, Assistance, BudgetGO, BudgetPDF, BudgetPSWDO, Client, LogBook, Processor, RecordComplete, RecordGO, RecordPDF, RecordPSWDO
+from models import db
 from dotenv import load_dotenv
 import os
 from sqlalchemy import text
@@ -101,7 +101,7 @@ def get_client_processor_data():
         record_number = request.args.get('record_number')
         dept = request.args.get('dept')
             
-        query_client = text(f"""
+        query_assistance = text(f"""
             SELECT * FROM AssistanceData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
         """)
         
@@ -120,7 +120,7 @@ def get_client_processor_data():
         
         query_budget = text(f"""SELECT * from {budget_dept} Order By DateChange DESC""")
         
-        client = db_utils.get_client_data(query_client)
+        client = db_utils.get_assistance_data(query_assistance)
         processor = db_utils.get_processor_data(query_processor)
         budget_balance = db_utils.get_budget_amount(query_budget)
         return {'client': client, 'processor': processor, 'budget_balance': budget_balance}, 200
@@ -139,6 +139,18 @@ def save_comment(control_number, record_number):
         return {"success": result, "message": "Comment has been saved!"}
     
     return {"success": result, "message": "Saving comment failed!"}
+
+
+@app.route('/api/release-assistance/<control_number>/<record_number>/<department>', methods=['POST'])
+def release_assistance(control_number, record_number, department):
+    
+    result = db_utils.release_client_data(control_number, record_number, department)
+
+    if result['success']:
+        return {"message": "Assistance Released!"}, 200
+    
+    return {'message': 'Failed to release assistance!'}, 500
+    
 
 if __name__ == '__main__':    
     app.run(debug=True)
