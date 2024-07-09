@@ -25,14 +25,13 @@
                         <span v-else>₱ {{data.Amount}}</span>
                     </template>
                     <template v-if="header.field == 'actions'" #body="{data}">
-                        <Button icon="pi pi-eye" style="color:orange" class="p-button-rounded p-button-info" @click="openClientProcessorDialog(data)"></Button>
-                        <Button icon="pi pi-trash" style="color:red" class="p-button-rounded p-button-danger"></Button>
+                        <Button class="rounded border border-solid border-slate-600 bg-sky-800 text-white px-3 py-1" @click="openClientProcessorDialog(data)">Open</Button>
                     </template>
                 </Column>
             </data-table>
         </template>
     </Card>
-    <ClientProcessorDialog :visible="clientProcessorDialogShow" :client="clientData" :processor="processorData" @close="closeClientProcessorDialog"></ClientProcessorDialog>
+    <ClientProcessorDialog :visible="clientProcessorDialogShow" :client="clientData" :processor="processorData" :balance="budgetBalance" @close="closeClientProcessorDialog"></ClientProcessorDialog>
     </div>
     
     
@@ -118,11 +117,10 @@ export default {
 
         const closeClientProcessorDialog = () => {
             clientProcessorDialogShow.value = false
+            getData()
         }
 
-        onMounted(() => {
-           getData()
-        })
+        getData()
         return {
             // variables
             headers,
@@ -131,6 +129,7 @@ export default {
             clientProcessorDialogShow,
             clientData,
             processorData,
+            budgetBalance,
       
             // methods
             editAssistance,
