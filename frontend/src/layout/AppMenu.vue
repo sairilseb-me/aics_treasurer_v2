@@ -44,6 +44,11 @@ const model = ref([
                 icon: 'pi pi-home',
                 to: '/pages/home'
             },
+            {
+                label: 'Released Assistance',
+                icon: 'pi pi-tags',
+                to: '/pages/released-assistance'
+            }
         ]
     },
 ]);
