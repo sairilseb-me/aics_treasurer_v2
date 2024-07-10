@@ -23,6 +23,9 @@ class DB_Utils:
                         "FirstName": row.FirstName,
                         "MiddleName": row.MiddleName,
                         "LastName": row.LastName,
+                        "Barangay": row.Barangay,
+                        "Municipality": row.Municipality,
+                        "Province": row.Province,
                         "TypeOfAssistance": row.TypeOfAssistance,
                         "Category": row.Category,
                         "SourceOfFund": row.SourceOfFund,
@@ -79,7 +82,31 @@ class DB_Utils:
                 "IDNumber": data.IDNumber,
                 "DatePresented": data.DatePresented,
             }
-       
+        elif dbtype == 'released':
+            if type(data) == list:
+                output = []
+                for row in data:
+                    singleData = {
+                        "ControlNumber": row.ControlNumber,
+                        "RecordNumber": row.RecordNumber,
+                        "Barangay": row.Barangay,
+                        "Municipality": row.Municipality,
+                        "Provice": row.Province,
+                        "FirstName": row.FirstName,
+                        "MiddleName": row.MiddleName,
+                        "LastName": row.LastName,
+                        "TypeOfAssistance": row.TypeOfAssistance,
+                        "Category": row.Category,
+                        "SourceOfFund": row.SourceOfFund,
+                        "Amount": row.Amount,
+                        "ReceivedDate": row.ReceivedDate,
+                        "ClassType": row.ClassType,
+                        "Mode": row.Mode,
+                        "DateRelease": row.DateRelease
+                    }
+                     
+                    output.append(singleData)
+        
         return output
     
     def get_assistance_data(self, query):
@@ -132,7 +159,7 @@ class DB_Utils:
                 
             get_budget_query = text(f"""SELECT * from {budget_dept} Order By DateChange DESC""")
             get_assistance_query = text(f"""
-                SELECT * FROM AssistanceData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
+                SELECT * FROM RecordComplete WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
             """)
             
             get_client_data_query = text(f"""
@@ -172,7 +199,7 @@ class DB_Utils:
                                              """)
             
             update_assistance_query = text("""
-                                            UPDATE AssistanceData SET Released = 'Yes', DateRelease = :date_release WHERE ControlNumber = :control_number And RecordNumber = :record_number
+                                            UPDATE RecordComplete SET Released = 'Yes', DateRelease = :date_release WHERE ControlNumber = :control_number And RecordNumber = :record_number
                                            """)
             
             
@@ -219,6 +246,55 @@ class DB_Utils:
         except Exception as e:
             self.db.session.rollback()
             return {'success': False, 'message': str(e) }
+        
+    def get_released_assistances(self, date_from, date_to, department):
+        
+        query = None
+        result = None
+       
+        if date_from and date_to and department:
+            query = text(f"""SELECT c.Barangay, c.Municipality, c.Province, rc.* FROM RecordComplete as rc Inner Join ClientData as c ON 
+                         rc.ControlNumber = c.ControlNumber WHERE rc.Released = 'Yes' AND rc.DateRelease BETWEEN :date_from AND :date_to AND 
+                         rc.SourceOfFund = :department ORDER BY rc.DateRelease DESC""")
+            result = self.db.session.execute(query, {'date_from': date_from, 'date_to': date_to, 'department': department})
+        elif date_from and date_to:
+            query = text(f"""SELECT c.Barangay, c.Municipality, c.Province, rc.* FROM RecordComplete as rc Inner Join ClientData as c ON 
+                         rc.ControlNumber = c.ControlNumber WHERE rc.Released = 'Yes' AND rc.DateRelease BETWEEN :date_from AND :date_to ORDER BY rc.DateRelease DESC""")
+            result = self.db.session.execute(query, {'date_from': date_from, 'date_to': date_to, 'department': department})
+        elif department:
+            query = text(f"""SELECT c.Barangay, c.Municipality, c.Province, rc.* FROM RecordComplete as rc Inner Join ClientData as c ON 
+                         rc.ControlNumber = c.ControlNumber WHERE rc.Released = 'Yes' AND rc.SourceOfFund = :department ORDER BY rc.DateRelease DESC""")
+            result = self.db.session.execute(query, {'date_from': date_from, 'date_to': date_to, 'department': department})
+        else:
+            query = text(f"""SELECT c.Barangay, c.Municipality, c.Province, rc.* FROM RecordComplete as rc Inner Join ClientData as c ON 
+                         rc.ControlNumber = c.ControlNumber WHERE rc.Released = 'Yes' ORDER BY rc.DateRelease DESC""")
+            result = self.db.session.execute(query, {'date_from': date_from, 'date_to': date_to, 'department': department})
+            
+        rows = result.fetchall()
+        
+        return self.convert_dict(rows, 'released')
+    
+    def get_released_assistance(self, first_name, last_name):
+        
+        query = ''
+        result = None
+        
+        if first_name and last_name:
+            query = text("""SELECT c.Barangay, c.Municipality, c.Province, rc.* FROM RecordComplete as rc Inner Join ClientData as c ON 
+                         rc.ControlNumber = c.ControlNumber Where c.FirstName LIKE :first_name And c.LastName LIKE :last_name""")
+            result = self.db.session.execute(query, {'first_name': '%' + first_name + '%', 'last_name': '%' + last_name + '%'})
+        else:
+            query = text("""SELECT c.Barangay, c.Municipality, c.Province, rc.* FROM RecordComplete as rc Inner Join ClientData as c ON 
+                         rc.ControlNumber = c.ControlNumber Where c.LastName LIKE :last_name""")
+            result = self.db.session.execute(query, {'last_name': '%' + last_name + '%'})
+        
+        rows = result.fetchall()
+   
+        return self.convert_dict(rows, 'released')
+        
+        
+        
+       
             
        
         

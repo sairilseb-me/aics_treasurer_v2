@@ -150,6 +150,11 @@ const router = createRouter({
                     path: '/pages/home',
                     name: 'homepage',
                     component: () => import('@/views/pages/Homepage.vue')
+                },
+                {
+                    path: '/pages/released-assistance',
+                    name: 'released assistance',
+                    component: () => import('@/views/pages/ReleasedAssistance.vue')
                 }
             ]
         },

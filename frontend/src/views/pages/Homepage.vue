@@ -88,9 +88,6 @@ export default {
             })
         }
 
-        const editAssistance = (data) => {
-            console.log(data)
-        }
 
         const exportCSV = (event) => {
             dt.value.exportCSV()    
@@ -107,6 +104,7 @@ export default {
                 
                 clientData.value = {
                     fullName: `${client.FirstName} ${client.MiddleName} ${client.LastName}`,
+                    address: `${client.Barangay} ${client.Municipality} ${client.Province}`,
                     ...response.data.client
                 }
                 
@@ -164,7 +162,6 @@ export default {
             search,
       
             // methods
-            editAssistance,
             exportCSV,
             openClientProcessorDialog,
             closeClientProcessorDialog,
