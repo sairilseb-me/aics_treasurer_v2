@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file, make_response
 import logging
 from logging.handlers import RotatingFileHandler
 from flask_cors import CORS
@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import os
 from sqlalchemy import text
 from db_utils import DB_Utils
+import csv
+import io
 
 
 load_dotenv()
@@ -152,7 +154,7 @@ def release_assistance(control_number, record_number, department):
     return {'message': 'Failed to release assistance!'}, 500
 
 @app.route('/api/get-released-assistances', methods=['GET'])
-def get_released_assistance():
+def get_released_assistances():
     
     try:
          # Get pagination parameters from request
@@ -171,6 +173,9 @@ def get_released_assistance():
         
         if request.args.get('department'):
             department = request.args.get('department')
+            
+        if date_from is not None and date_to is None:
+            return jsonify({'error': 'Date range is required'}), 400
             
         output = db_utils.get_released_assistances(date_from, date_to, department)
 
@@ -195,8 +200,6 @@ def get_released_assistance():
     except Exception as e:
         print(f'Error: {str(e)}')
         return {'Error': 'An error occurred!'}, 500
-    
-
 
 @app.route('/api/search-client', methods=['GET'])
 def search_client():
@@ -212,14 +215,14 @@ def search_client():
         query = ""
         
         if (first_name and last_name):
-            query = text(f"""SELECT c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName,
+            query = text(f"""SELECT c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName, c.Barangay, c.Municipality, c.Province,
                     a.TypeOfAssistance, a.Category, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode
                 FROM ClientData AS c
                 INNER JOIN AssistanceData AS a ON c.ControlNumber = a.ControlNumber
                 WHERE c.FirstName LIKE '%{first_name}%' And c.LastName LIKE '%{last_name}%' And a.Released = 'No' AND a.Amount IS NOT NULL;""")
             
         else: query = text(f"""
-                        SELECT c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName,
+                        SELECT c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName, c.Barangay, c.Municipality, c.Province,
                             a.TypeOfAssistance, a.Category, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode
                             FROM ClientData AS c
                             INNER JOIN AssistanceData AS a ON c.ControlNumber = a.ControlNumber
@@ -284,5 +287,44 @@ def get_released_assistance_details():
         return jsonify({'error': 'An error occurred'}), 500    
     
 
+@app.route('/api/export-released-assistances/', methods=['GET'])
+def export_released_assistance():
+    
+    try:
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        department = request.args.get('department')
+        
+        if date_from is None or date_to is None:
+            return jsonify({'error': 'Date range is required'}), 400
+        
+        
+        data = db_utils.get_released_assistances(date_from, date_to, department)
+        
+        headers = data[0].keys()
+        
+        total_amount = sum(item['Amount'] for item in data)
+        
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=headers)
+        writer.writeheader()
+        writer.writerows(data)
+        
+        total_row = {header: '' for header in headers}
+        total_row['Amount'] = total_amount
+        writer.writerow(total_row)
+        
+        filename = f'{date_from}_{date_to}_released_assistance.csv'
+        
+        response = make_response(output.getvalue())
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        response.headers['Content-type'] = 'text/csv'
+        
+        return response, 200
+        
+    except Exception as e:
+        app.logger.error(f'Error: {e}')
+        return jsonify({'error': 'An error occurred'}), 500
+    
 if __name__ == '__main__':    
     app.run(debug=True)

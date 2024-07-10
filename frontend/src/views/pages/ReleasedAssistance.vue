@@ -43,7 +43,13 @@
                     
                 <div class="border border-solid border-slate-400 mt-5 pt-3">
                     <DataTable :value="releasedData" selectionMode paginator :rows="10" :loading="tableLoading" :rowsPerPageOptions="[5, 10, 20, 50]">
+                        <template #header>
+                                <div>
+                                    <Button :disabled="disableExport" class="border border-solid border-slate-500 px-5 bg-sky-700 text-white py-2" @click="exportReleasedAssistances">Export<i class="pi pi-arrow-up-right ml-2"></i></Button>
+                                </div>
+                        </template>
                         <Column v-for="header in releasedColumns" :key="header.field" :field="header.field" :header="header.header">
+                            
                             <template v-if="header.field == 'FullName'" #body="{data}">
                                 {{data.FirstName}} {{ data.MiddleName }} {{ data.LastName }}
                             </template>
@@ -79,7 +85,7 @@ export default {
 
         const enableDateFilter = ref(false);
         const enableDropDown = ref(false);
-        const releasedData = ref([])
+        const releasedData = ref([]) 
         const selectedDept = ref(null)
         const date_from = ref(null)
         const date_to = ref(null)
@@ -165,6 +171,10 @@ export default {
             }).then(response => {
                 releasedData.value = response.data.data
             }).catch(error => {
+                if (error.response.status == 400){
+                    toast.showMessage('error', 'Error', 'Make sure that both Date From and Date To are selected.')
+                    return
+                }
                 toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
             }).finally(() => {
                 tableLoading.value = false
@@ -198,12 +208,60 @@ export default {
             })
         }
 
+
+        const disableExport = computed(() => {
+            if (enableDateFilter.value == true && search.value == ''){
+                return false
+            }
+
+            return true
+        })
+
+        const exportReleasedAssistances = async() => {
+            let url = 'export-released-assistances'
+            await axios.get(url, {
+                params: {
+                    date_from: date_from.value,
+                    date_to: date_to.value,
+                    department: selectedDept.value ? selectedDept.value.value : null
+                },
+                responseType: 'blob',
+            }).then(response => {
+                if (response.status == 200) {
+                    const url = window.URL.createObjectURL(new Blob([response.data]))
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${date_from.value}-${date_to.value}-released-assistances.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    toast.showMessage('success', 'Success', 'Data has been exported.')
+                }
+            }).catch(error => {
+                console.log(error.response.status)
+                if (error.response.status == 400) {
+                    toast.showMessage('error', 'Error', 'Make sure that both Date From and Date To are selected.')
+                    return
+                }
+                
+                toast.showMessage('error', 'Error', `Cannot connect to server. Please try again.}`)
+            })
+        } 
+
         const disableFilters = () => {
             enableDateFilter.value = false
             enableDropDown.value = false
         }
 
         getReleasedAssistances()
+
+        const resetValues = () => {
+            date_from.value = null
+            date_to.value = null
+            selectedDept.value = null
+            search.value = ''
+        }
 
         return {
 
@@ -216,17 +274,17 @@ export default {
             date_from,
             date_to,
             releasedData,
-            selectedDept,
             search,
             tableLoading,
 
             //computed
-
+            disableExport,
 
             //methods
             getReleasedAssistances,
             getReleasedAssistanceData,
             disableFilters,
+            exportReleasedAssistances,
 
         }
     }

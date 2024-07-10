@@ -5,7 +5,7 @@ class ToastService  {
     toast = useToast();
 
     showMessage = (status, summary, message) => {
-        this.toast.add({ severity: status, summary: summary, detail: message, life: 3000 });
+        this.toast.add({ severity: status, summary: summary, detail: message, life: 5000 });
     }
 }
 
