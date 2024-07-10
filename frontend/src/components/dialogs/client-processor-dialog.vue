@@ -9,6 +9,7 @@
                 </div>
             </template>
             <p><strong>Name:</strong> {{ client.fullName }}</p>
+            <p><strong>Address:</strong> {{ client.address }}</p>
             <p><strong>Control Number:</strong> {{ clientData.ControlNumber }}</p>
             <p><strong>Record Number:</strong> {{ clientData.RecordNumber }}</p>
             <p><strong>Type Of Assistance:</strong> {{ clientData.TypeOfAssistance }}</p>
@@ -100,7 +101,6 @@ export default {
                     clientData.value = value
                     processorData.value = props.processor
                     budget_balance.value = props.balance
-                    console.log(budget_balance.value.toLocaleString())
                 }
             }
         )
