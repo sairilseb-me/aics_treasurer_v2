@@ -10,7 +10,7 @@
                         <input-text placeholder="Search" class="border border-solid border-slate-400 py-2 px-3" v-model="search" @change="searchClient"></input-text>
                     </InputGroup>
                 </div>
-            <data-table class="border rounded mt-5" :value="assistance" selectionMode="single"  paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" ref="dt">
+            <data-table class="border rounded mt-5" :loading="tableLoading" :value="assistance" selectionMode="single"  paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" ref="dt">
                 <template #header>
                     <div style="text-align: left">
                         <Button icon="pi pi-external-link" class="bg-sky-500 px-5 py-2 text-white" label="Export" @click="exportCSV($event)" />
@@ -31,7 +31,7 @@
             </data-table>
         </template>
     </Card>
-    <ClientProcessorDialog :visible="clientProcessorDialogShow" :client="clientData" :processor="processorData" :balance="budgetBalance" @close="closeClientProcessorDialog"></ClientProcessorDialog>
+        <ClientProcessorDialog :visible="clientProcessorDialogShow" :client="clientData" :processor="processorData" :balance="budgetBalance" @close="closeClientProcessorDialog"></ClientProcessorDialog>
     </div>
     
     
@@ -47,6 +47,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon';
 import Button from 'primevue/button';
 import { onMounted, ref } from 'vue';
 import ClientProcessorDialog from '@/components/dialogs/client-processor-dialog.vue'
+import ToastService from '@/plugins/toasts'
 import axios from '@axios';
 export default {
     components: {
@@ -66,7 +67,9 @@ export default {
         const budgetBalance = ref(0)
         const processorData = ref({})
         const clientProcessorDialogShow = ref(false)
+        const toast = new ToastService()
         const search = ref('')
+        const tableLoading = ref(false)
         const headers = ref([
            
             {field: 'FullName', header: 'Full Name'},
@@ -82,9 +85,14 @@ export default {
         const dt = ref()
 
         const getData = () => {
+            tableLoading.value = true
             axios.get('get-data')
             .then(response => {
                 assistance.value = response.data.data
+            }).catch(error => {
+                toast.showMessage('error', 'Error', 'An error occurred while fetching data. Please try again later.')
+            }).finally(() => {
+                tableLoading.value = false
             })
         }
 
@@ -94,6 +102,7 @@ export default {
         }
 
         const openClientProcessorDialog = (client) => {
+            tableLoading.value = true
             axios.get(`get-client-processor-data`, {
                 params: {
                     control_number: client.ControlNumber,
@@ -111,7 +120,12 @@ export default {
                 processorData.value = response.data.processor
                 budgetBalance.value = response.data.budget_balance
                 clientProcessorDialogShow.value = true
-            })
+            }).catch(error => {
+                toast.showMessage('error', 'Error', 'An error occurred while fetching data. Please try again later.')
+            
+            }).finally(() => {
+                tableLoading.value = false
+            })  
         }
 
         const searchClient = () => {
@@ -147,6 +161,15 @@ export default {
         const closeClientProcessorDialog = () => {
             clientProcessorDialogShow.value = false
             getData()
+            resetValues()
+
+        }
+
+        const resetValues = () => {
+            clientData.value = {}
+            processorData.value = {}
+            budgetBalance.value = 0
+            search.value = ''
         }
 
         getData()
@@ -160,6 +183,7 @@ export default {
             processorData,
             budgetBalance,
             search,
+            tableLoading,
       
             // methods
             exportCSV,
