@@ -9,6 +9,10 @@ from sqlalchemy import text
 from db_utils import DB_Utils
 import csv
 import io
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
+from datetime import timedelta
+
+
 
 
 load_dotenv()
@@ -16,6 +20,7 @@ UID = os.getenv('UID')
 PASSWORD = os.getenv('PASSWORD')
 HOST = os.getenv('HOST')
 DATABASE = os.getenv('DATABASE')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = (
@@ -23,12 +28,18 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 )
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = SECRET_KEY
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=2)
 
 CORS(app)
+
+jwt = JWTManager(app)
 
 db.init_app(app)
 
 db_utils = DB_Utils(db)
+
+revoked_tokens = set()  # Set to store revoked tokens
 
 @app.route('/api/test', methods=['GET'])
 def test():
@@ -54,9 +65,46 @@ def test():
         
     # tupl_result = [tuple(row) for row in rows]
     return {"message": "output"}, 200
+
+
+# Error handling for expired tokens
+@jwt.expired_token_loader
+def expired_token_callback(expired_token, err):
+    expired_token = expired_token['typ']
+    return jsonify({
+        'message': f'The {expired_token} token has expired',
+        'error': 'token expired'
+    }), 401
     
+@app.route('/api/login', methods=['POST'])
+def login():
+    username = request.json['username']
+    password = request.json['password']
+    
+    return {"message": f"{username, password}"}, 200
+    
+    query = text("""SELECT UserName, Password from TreasurerLogin Where UserName = :username And Password = :password;""")
+    
+    result = db.session.execute(query, {'username': username, 'password': password})
+    
+    row = result.fetchone()
+    
+    if row:
+        access_token = create_access_token(identity=username)
+        return {"message": "Login Success!", "access_token": access_token, "username": username}, 200
+    
+    return {"message": "Login Failed! Please check your credentials."}, 400
+
+@app.route('/api/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    jti = get_jwt()['jti']
+    revoked_tokens.add(jti)
+    return jsonify({"message": "Access token has been revoked. User is logged out"}), 200
+
 
 @app.route('/api/get-data', methods=['GET'])
+@jwt_required()
 def get_data():
     try:
         # Get pagination parameters from request
