@@ -196,13 +196,21 @@ export default {
                 }
             }
 
-            axios.get('get-released-assistance', {
-                params: searchParams
+            axios.get('get-specific-released-assistances/', {
+                params: searchParams,
+                headers: {
+                    Authorization: null
+                }
             })
             .then(response => {
                 releasedData.value = response.data.data
             }).catch(error => {
-                toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
+                if (error.response){
+                    if (error.response.status == 500){
+                        toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
+                    }
+                }
+
             }).finally(() => {
                 tableLoading.value = false
             })
@@ -245,7 +253,6 @@ export default {
                     toast.showMessage('success', 'Success', 'Data has been exported.')
                 }
             }).catch(error => {
-                console.log(error.response.status)
                 if (error.response.status == 400) {
                     toast.showMessage('error', 'Error', 'Make sure that both Date From and Date To are selected.')
                     return

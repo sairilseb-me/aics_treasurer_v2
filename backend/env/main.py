@@ -32,7 +32,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = SECRET_KEY
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=9)
 
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, expose_headers=["X-Custom-Header"])
 
 jwt = JWTManager(app)
 
@@ -300,18 +300,26 @@ def search_client():
     except Exception as e:
         app.logger.error(f'Error: {e}')
         return jsonify({'error': 'An error occurred'}), 500
+
+
+@app.before_request
+def log_request_info():
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
     
-@app.route('/api/get-released-assistance/', methods=['GET'])
+@app.route('/api/get-specific-released-assistances/', methods=['GET'])
 @jwt_required()
-def get_released_assistance_details():
+def get_specific_released_assistances():
     
-    try:
+    try:    
          # Get pagination parameters from request
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 50, type=int)
         
         first_name = request.args.get('first_name')
         last_name = request.args.get('last_name')
+        
+        print(first_name, last_name)
         
         output = db_utils.get_released_assistance(first_name, last_name)
         
@@ -323,7 +331,7 @@ def get_released_assistance_details():
         start = (page - 1) * per_page
         end = start + per_page
         paginated_output = output[start:end]
-
+        
         # Return paginated results with metadata
         return jsonify({
             'total_items': total_items,
@@ -334,6 +342,7 @@ def get_released_assistance_details():
         }), 200
     except Exception as e:
         app.logger.error(f'Error: {e}')
+        print(str(e))
         return jsonify({'error': 'An error occurred'}), 500    
     
 
