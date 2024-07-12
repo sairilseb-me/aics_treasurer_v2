@@ -137,7 +137,7 @@ export default {
                 toast.showMessage('error', 'Error', 'Insufficient budget balance.')
                 return
             }
-            axios.post(`/release-assistance/${clientData.value.ControlNumber}/${clientData.value.RecordNumber}/${clientData.value.SourceOfFund}`)
+            axios.post(`release-assistance/${clientData.value.ControlNumber}/${clientData.value.RecordNumber}/${clientData.value.SourceOfFund}/${localStorage.getItem('username')}`)
             .then(response => {
                 if (response.status == 200){
                     toast.showMessage('success', 'Success', 'Assistance has been released.')

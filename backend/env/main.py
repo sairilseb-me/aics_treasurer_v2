@@ -32,7 +32,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = SECRET_KEY
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=9)
 
-CORS(app, resources={r"/api/*": {"origins": "*"}}, expose_headers=["X-Custom-Header"])
+CORS(app)
 
 jwt = JWTManager(app)
 
@@ -182,13 +182,13 @@ def save_comment(control_number, record_number):
     return {"success": result, "message": "Saving comment failed!"}
 
 
-@app.route('/api/release-assistance/<control_number>/<record_number>/<department>', methods=['POST'])
+@app.route('/api/release-assistance/<control_number>/<record_number>/<department>/<username>', methods=['POST'])
 @jwt_required()
-def release_assistance(control_number, record_number, department):
+def release_assistance(control_number, record_number, department, username):
     
     try:
-        print(control_number, record_number, department)
-        result = db_utils.release_client_data(control_number, record_number, department)
+        print(control_number, record_number, department, username)
+        result = db_utils.release_client_data(control_number, record_number, department, username)
 
         if result['success']:
             return jsonify({"message": "Assistance Released!"}), 200
@@ -302,10 +302,10 @@ def search_client():
         return jsonify({'error': 'An error occurred'}), 500
 
 
-@app.before_request
-def log_request_info():
-    app.logger.debug('Headers: %s', request.headers)
-    app.logger.debug('Body: %s', request.get_data())
+# @app.before_request
+# def log_request_info():
+#     app.logger.debug('Headers: %s', request.headers)
+#     app.logger.debug('Body: %s', request.get_data())
     
 @app.route('/api/get-specific-released-assistances/', methods=['GET'])
 @jwt_required()
