@@ -141,7 +141,7 @@ class DB_Utils:
             return True
         return False
     
-    def release_client_data(self, control_number, record_number, dept):
+    def release_client_data(self, control_number, record_number, dept, username):
         
         try:
             budget_dept = ''
@@ -171,7 +171,6 @@ class DB_Utils:
             budget_balance = float(self.get_budget_amount(get_budget_query))
             client_assistance_data = self.get_assistance_data(get_assistance_query)
             deduct_amount = float(client_assistance_data['Amount'])
-            user_data = 'vgabaleo'
             current_date_time = datetime.now()
             
             new_budget = float(budget_balance - deduct_amount)
@@ -238,7 +237,7 @@ class DB_Utils:
                                                                                                'date_release': current_date_time})
             
             
-            result_log_query = self.db.session.execute(set_log_query, {'user_id': user_data, 'date_time': current_date_time, 'action': 'Released Client Assistance'})
+            result_log_query = self.db.session.execute(set_log_query, {'user_id': username, 'date_time': current_date_time, 'action': 'Released Client Assistance'})
             
             
             self.db.session.commit()
