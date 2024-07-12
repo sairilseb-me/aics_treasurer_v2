@@ -88,7 +88,9 @@ export default {
             tableLoading.value = true
             axios.get('get-data')
             .then(response => {
-                assistance.value = response.data.data
+                if(response.status == 200){
+                    assistance.value = response.data.data
+                }
             }).catch(error => {
                 toast.showMessage('error', 'Error', 'An error occurred while fetching data. Please try again later.')
             }).finally(() => {

@@ -22,6 +22,7 @@ HOST = os.getenv('HOST')
 DATABASE = os.getenv('DATABASE')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     f'mssql+pyodbc://{UID}:{PASSWORD}@{HOST}/{DATABASE}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=Yes'
@@ -29,7 +30,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = SECRET_KEY
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=2)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=9)
 
 CORS(app)
 
@@ -43,57 +44,45 @@ revoked_tokens = set()  # Set to store revoked tokens
 
 @app.route('/api/test', methods=['GET'])
 def test():
-    query = text("""Select TOP 10 c.ControlNumber, a.RecordNumber, c.FirstName, c.MiddleName, c.LastName, a.TypeOfAssistance, a.SourceOfFund, a.Amount, a.ReceivedDate, a.Mode from ClientData as c INNER Join AssistanceData as a on c.ControlNumber = a.ControlNumber Where a.Released = 'No' And a.Amount IS NOT NULL;""")
-    result = db.session.execute(query)
-    rows = result.fetchall()
-    # output = []
     
-    # for row in rows:
-    #     data = {
-    #         "ControlNumber": row.ControlNumber,
-    #         "RecordNumber": row.RecordNumber,
-    #         "FirstName": row.FirstName,
-    #         "MiddleName": row.MiddleName,
-    #         "LastName": row.LastName,
-    #         "TypeOfAssistance": row.TypeOfAssistance,
-    #         "SourceOfFund": row.SourceOfFund,
-    #         "Amount": row.Amount,
-    #         "ReceivedDate": row.ReceivedDate,
-    #         "Mode": row.Mode
-    #     }
-    #     output.append(data)
-        
-    # tupl_result = [tuple(row) for row in rows]
-    return {"message": "output"}, 200
+    return {"message": "Hello World"}, 200
 
 
 # Error handling for expired tokens
 @jwt.expired_token_loader
 def expired_token_callback(expired_token, err):
-    expired_token = expired_token['typ']
-    return jsonify({
-        'message': f'The {expired_token} token has expired',
-        'error': 'token expired'
-    }), 401
+    try:
+        expired_token = expired_token['typ']
+        return jsonify({
+            'message': f'The {expired_token} token has expired',
+            'error': 'token expired'
+        }), 401
+    except Exception as e:
+        app.logger.error(f'Error: {e}')
+        return jsonify({'error': 'An error occurred'}), 500
     
 @app.route('/api/login', methods=['POST'])
 def login():
-    username = request.json['username']
-    password = request.json['password']
-    
-    return {"message": f"{username, password}"}, 200
-    
-    query = text("""SELECT UserName, Password from TreasurerLogin Where UserName = :username And Password = :password;""")
-    
-    result = db.session.execute(query, {'username': username, 'password': password})
-    
-    row = result.fetchone()
-    
-    if row:
-        access_token = create_access_token(identity=username)
-        return {"message": "Login Success!", "access_token": access_token, "username": username}, 200
-    
-    return {"message": "Login Failed! Please check your credentials."}, 400
+    try:
+        username = request.json['username']
+        password = request.json['password']
+        
+        query = text("""SELECT UserName, Password from TreasurerLogin Where UserName = :username And Password = :password;""")
+        
+        result = db.session.execute(query, {'username': username, 'password': password})
+        
+        row = result.fetchone()
+        
+        if row:
+            access_token = create_access_token(identity=username)
+            return jsonify({"message": "Login Success!", "access_token": access_token, "username": username}), 200
+        
+        return jsonify({"message": "Login Failed! Please check your credentials."}), 400
+
+    except Exception as e:
+        app.logger.error(f'Error: {e}')
+
+        return jsonify({"message": "Login Failed! Please check your credentials."}), 400
 
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
@@ -144,6 +133,7 @@ def get_data():
         return jsonify({'error': 'An error occurred'}), 500
     
 @app.route('/api/get-client-processor-data', methods=['GET'])
+@jwt_required()
 def get_client_processor_data():
     try:
         #Get ControlNumber and RecordNumber from request
@@ -179,6 +169,7 @@ def get_client_processor_data():
         return jsonify({'error': 'An error occurred'}), 500
     
 @app.route('/api/save-comment/<control_number>/<record_number>', methods=['POST'])
+@jwt_required()
 def save_comment(control_number, record_number):
     print(control_number, record_number)
     comment = request.json['comment']
@@ -192,16 +183,25 @@ def save_comment(control_number, record_number):
 
 
 @app.route('/api/release-assistance/<control_number>/<record_number>/<department>', methods=['POST'])
+@jwt_required()
 def release_assistance(control_number, record_number, department):
     
-    result = db_utils.release_client_data(control_number, record_number, department)
+    try:
+        print(control_number, record_number, department)
+        result = db_utils.release_client_data(control_number, record_number, department)
 
-    if result['success']:
-        return {"message": "Assistance Released!"}, 200
+        if result['success']:
+            return jsonify({"message": "Assistance Released!"}), 200
+        else:
+            print(result['message'])
+            return jsonify({"message": "Failed to release assistance!"}), 500
+    except Exception as e:
+        app.logger.error(f'Error: {e}')
+        return jsonify({'message': 'Failed to release assistance!'}), 500
     
-    return {'message': 'Failed to release assistance!'}, 500
 
 @app.route('/api/get-released-assistances', methods=['GET'])
+@jwt_required()
 def get_released_assistances():
     
     try:
@@ -250,6 +250,7 @@ def get_released_assistances():
         return {'Error': 'An error occurred!'}, 500
 
 @app.route('/api/search-client', methods=['GET'])
+@jwt_required()
 def search_client():
     try:
         first_name = request.args.get('first_name')
@@ -301,6 +302,7 @@ def search_client():
         return jsonify({'error': 'An error occurred'}), 500
     
 @app.route('/api/get-released-assistance/', methods=['GET'])
+@jwt_required()
 def get_released_assistance_details():
     
     try:
@@ -336,6 +338,7 @@ def get_released_assistance_details():
     
 
 @app.route('/api/export-released-assistances/', methods=['GET'])
+@jwt_required()
 def export_released_assistance():
     
     try:
@@ -345,7 +348,6 @@ def export_released_assistance():
         
         if date_from is None or date_to is None:
             return jsonify({'error': 'Date range is required'}), 400
-        
         
         data = db_utils.get_released_assistances(date_from, date_to, department)
         

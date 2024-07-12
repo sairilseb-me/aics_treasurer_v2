@@ -1,5 +1,4 @@
 <script setup>
-import Toast from 'primevue/toast';
 </script>
 
 <template>
@@ -8,6 +7,4 @@ import Toast from 'primevue/toast';
         <router-view />
     </div>
 </template>
-
-
 <style scoped></style>

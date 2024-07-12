@@ -124,7 +124,9 @@ export default {
                     }
                 }).catch(error => {
                     toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
-                })
+                }).finally(() => {
+                loading.value = false
+            })
                 
             }
             closeDialog()
@@ -144,7 +146,11 @@ export default {
                     toast.showMessage('error', 'Error', 'An error occured while releasing assistance. Please try again.')
                 }
             }).catch(error => {
-                toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
+                if (error.response){
+                    if (error.response.status == 500){
+                        toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
+                    }
+                }
             })
         }
 

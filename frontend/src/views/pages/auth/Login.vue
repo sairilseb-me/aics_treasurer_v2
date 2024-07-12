@@ -2,6 +2,8 @@
 import { useLayout } from '@/layout/composables/layout';
 import { ref, computed } from 'vue';
 import axios from '@axios'
+import ToastService from '@/plugins/toasts';
+import {useRouter} from 'vue-router'
 
 const { layoutConfig } = useLayout();
 const username = ref('');
@@ -10,6 +12,8 @@ const passwordRef = ref(null);
 const usernameInvalid = ref(false);
 const passwordInvalid = ref(false);
 const password = ref('');
+const toast = new ToastService();
+const router = useRouter()
 
 
 const logoUrl = computed(() => {
@@ -21,7 +25,12 @@ const resetValidation = () => {
         passwordInvalid.value = false
     }
 
-const login = () => {
+    const resetInput = () => {
+        username.value = ''
+        password.value = ''
+    }
+
+const login = async() => {
 
     resetValidation()
 
@@ -39,21 +48,27 @@ const login = () => {
         return
     }
 
-    axios.post('login', {
-        username: username.value,
-        password: password.value
+    await axios.post('login', {
+        username: username.value.trim(),
+        password: password.value.trim()
     }).then(response => {
-        console.log(response)
+        if(response.status == 200){
+            localStorage.setItem('token', response.data.access_token)
+            localStorage.setItem('username', response.data.username)
+            resetInput()
+            router.push({path: '/pages/home'})
+        }
     }).catch(error => {
-        console.log(error)
+        if (error.response){
+            if (error.response.status == 400){
+                toast.showMessage('error', 'Error', 'Invalid Username or Password')
+            }
+    
+            if (error.response.status == 500){
+                toast.showMessage('error', 'Error', 'An error occurred while logging in. Please try again later.')
+            }
+        }
     })
-
-   
-
-    const resetInput = () => {
-        username.value = ''
-        password.value = ''
-    }
 }
 
 </script>
@@ -75,7 +90,7 @@ const login = () => {
                         </div>
                         <div class="flex flex-col mb-3">
                             <label for="password1" class="block text-900 font-medium text-xl mb-2">Password</label>
-                            <Password ref="passwordRef" id="password1" v-model="password" placeholder="Password" :toggleMask="true" class="w-full" inputClass="w-full" :inputStyle="{ padding: '1rem' }" :invalid="password === ''"></Password>
+                            <Password ref="passwordRef" id="password1" v-model="password" placeholder="Password" :toggleMask="true" class="w-full" inputClass="w-full" :inputStyle="{ padding: '1rem' }" :invalid="password === ''" @keyup.enter="login"></Password>
                             <Tag v-if="passwordInvalid" severity="danger" value="Please input a Password"></Tag>
 
                         </div>
