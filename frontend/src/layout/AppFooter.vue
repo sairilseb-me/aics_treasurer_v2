@@ -11,9 +11,10 @@ const logoUrl = computed(() => {
 
 <template>
     <div class="layout-footer">
-        <img :src="logoUrl" alt="Logo" height="20" class="mr-2" />
-        by
-        <span class="font-medium ml-2">PrimeVue</span>
+        <div class="flex justify-center">
+            <span class="text-xs text-slate-400">Created By: Cyril Seberiaga </span>
+            <span class="text-xs text-slate-400">© 2024 Guimaras Provincial Government</span>
+        </div>
     </div>
 </template>
 <style lang="scss" scoped></style>
