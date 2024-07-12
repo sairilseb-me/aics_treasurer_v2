@@ -159,7 +159,7 @@ class DB_Utils:
                 
             get_budget_query = text(f"""SELECT * from {budget_dept} Order By DateChange DESC""")
             get_assistance_query = text(f"""
-                SELECT * FROM RecordComplete WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
+                SELECT * FROM AssistanceData WHERE ControlNumber = '{control_number}' And RecordNumber = '{record_number}' And Released = 'No';
             """)
             
             get_client_data_query = text(f"""
@@ -199,7 +199,7 @@ class DB_Utils:
                                              """)
             
             update_assistance_query = text("""
-                                            UPDATE RecordComplete SET Released = 'Yes', DateRelease = :date_release WHERE ControlNumber = :control_number And RecordNumber = :record_number
+                                            UPDATE AssistanceData SET Released = 'Yes', DateRelease = :date_release WHERE ControlNumber = :control_number And RecordNumber = :record_number
                                            """)
             
             

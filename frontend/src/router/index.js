@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
+import ToastService from '@/plugins/toasts';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -10,8 +11,7 @@ const router = createRouter({
             children: [
                 {
                     path: '/',
-                    name: 'dashboard',
-                    component: () => import('@/views/Dashboard.vue')
+                    redirect: '/pages/home'
                 },
                 {
                     path: '/uikit/formlayout',
@@ -186,5 +186,16 @@ const router = createRouter({
         }
     ]
 });
+
+router.beforeEach((to, from, next) => {
+   
+    if (to.name === 'login' && localStorage.getItem('token')) {
+        next({ name: 'homepage' });
+    } else if (to.name !== 'login' && !localStorage.getItem('token')) {
+        next({ name: 'login' });
+    } else {
+        next();
+    }
+})
 
 export default router;

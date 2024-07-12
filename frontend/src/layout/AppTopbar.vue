@@ -2,12 +2,15 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
 import { useRouter } from 'vue-router';
+import ToastService from '@/plugins/toasts';
+import axios from '@axios'
 
 const { layoutConfig, onMenuToggle } = useLayout();
 
 const outsideClickListener = ref(null);
 const topbarMenuActive = ref(false);
 const router = useRouter();
+const toast = new ToastService();
 
 onMounted(() => {
     bindOutsideClickListener();
@@ -18,7 +21,7 @@ onBeforeUnmount(() => {
 });
 
 const logoUrl = computed(() => {
-    return `/layout/images/${layoutConfig.darkTheme.value ? 'logo-white' : 'logo-dark'}.svg`;
+    return `/layout/images/guimaras-logo.png`;
 });
 
 const onTopBarMenuButton = () => {
@@ -55,13 +58,29 @@ const isOutsideClicked = (event) => {
 
     return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
 };
+
+const logout = () => {
+    axios.post('logout').then(response => {
+        if (response.status == 200) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            router.push({ path: '/auth/login' });
+        }
+    }).catch(error => {
+        if (error.response){
+            if (error.response.status == 500){
+                toast.showMessage('error', 'Error', 'Cannot connect to server. Please try again.')
+            }
+        }
+    })
+}
 </script>
 
 <template>
     <div class="layout-topbar">
         <router-link to="/" class="layout-topbar-logo">
             <img :src="logoUrl" alt="logo" />
-            <span>SAKAI</span>
+            <span>AICS Treasurer</span>
         </router-link>
 
         <button class="p-link layout-menu-button layout-topbar-button" @click="onMenuToggle()">
@@ -73,9 +92,9 @@ const isOutsideClicked = (event) => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <button @click="onTopBarMenuButton()" class="p-link layout-topbar-button">
-                <i class="pi pi-user"></i>
-                <span>Profile</span>
+            <button class="flex items-center bg-slate-100 hover:bg-slate-200 rounded px-5 py-2" @click="logout">
+                <i class="pi pi-user mr-2"></i>
+                Logout
             </button>
         </div>
     </div>

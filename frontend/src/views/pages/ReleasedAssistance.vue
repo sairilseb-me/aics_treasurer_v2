@@ -217,7 +217,13 @@ export default {
             return true
         })
 
+        const formatDate = (date) => {
+            const dateSplit = date.split('/')
+            return `${dateSplit[2]}-${dateSplit[0]}-${dateSplit[1]}`
+        }
+
         const exportReleasedAssistances = async() => {
+
             let url = 'export-released-assistances'
             await axios.get(url, {
                 params: {
@@ -231,7 +237,7 @@ export default {
                     const url = window.URL.createObjectURL(new Blob([response.data]))
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `${date_from.value}-${date_to.value}-released-assistances.csv`;
+                    a.download = `${formatDate(date_from.value.toLocaleDateString())}-${formatDate(date_to.value.toLocaleDateString())}-released-assistances.csv`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
